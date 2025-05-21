@@ -14,7 +14,7 @@ import { router } from './router'
 const socket = io('http://localhost:3000') // backend address
 const joined = ref(false)
 const lobbyCode = ref('')
-const playerSymbol = ref < 'X' | 'O' | null > (null)
+const playerSymbol = ref<'X' | 'O' | null>(null)
 
 function onJoin(code: string) {
   lobbyCode.value = code
