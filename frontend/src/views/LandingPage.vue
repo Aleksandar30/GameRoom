@@ -3,6 +3,9 @@
         <header>
             <h1>🎮 <span class="brand">GameRoom</span></h1>
             <p class="subtitle">Play real-time games with friends or strangers</p>
+            <el-button size="small" @click="toggleDark()" class="theme-toggle" plain>
+                {{ isDark ? '🌙 Dark Mode' : '☀️ Light Mode' }}
+            </el-button>
         </header>
 
         <section class="actions">
@@ -19,6 +22,8 @@
 
 <script lang="ts" setup>
 import { useRouter } from 'vue-router'
+import { useDark, useToggle } from '@vueuse/core'
+
 
 const router = useRouter()
 
@@ -27,9 +32,21 @@ function playAsGuest() {
     sessionStorage.setItem('guestUser', guestId)
     router.push('/lobby')
 }
+
+const isDark = useDark({
+    valueDark: 'dark',
+    valueLight: 'light',
+    selector: 'body',
+    storageKey: 'theme', // Optional: remove this to avoid persistence
+})
+
+const toggleDark = useToggle(isDark)
+
+
 </script>
 
-<style scoped>
+<style>
+/* 🔓 Unscoped = global styles = works with body.dark */
 .landing {
     padding: 80px 40px;
     min-height: 100vh;
@@ -62,11 +79,6 @@ h1 {
     color: #409eff;
 }
 
-body.dark {
-    background-color: #1e1e1e;
-    color: #e0e0e0;
-}
-
 .subtitle {
     font-size: 1.25rem;
     color: #666;
@@ -83,5 +95,9 @@ body.dark {
 
 .actions el-button {
     min-width: 160px;
+}
+
+.theme-toggle {
+    margin-top: 20px;
 }
 </style>
