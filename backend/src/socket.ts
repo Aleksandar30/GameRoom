@@ -1,60 +1,100 @@
 import { Server } from "socket.io"
 
-// 🧠 Keeps track of players in each lobby
-const lobbyPlayers: Record<string, string[]> = {}
+const gameLobbies: Record<string, string[]> = {}
+const ongoingMatches: Record<string, [string, string]> = {}
 
 export function setupSocket(io: Server) {
   io.on("connection", (socket) => {
     console.log(`🟢 ${socket.id} connected`)
 
-    socket.on("joinLobby", (lobbyCode: string) => {
-      socket.join(lobbyCode)
-      console.log(`${socket.id} joined ${lobbyCode}`)
-
-      // Initialize the lobby if it's new
-      if (!lobbyPlayers[lobbyCode]) {
-        lobbyPlayers[lobbyCode] = []
+    // ✅ Join shared game lobby
+    socket.on("joinGameLobby", (game: string) => {
+      socket.join(`lobby-${game}`)
+      if (!gameLobbies[game]) gameLobbies[game] = []
+      if (!gameLobbies[game].includes(socket.id)) {
+        gameLobbies[game].push(socket.id)
       }
 
-      // Add player if not already in the lobby
-      if (!lobbyPlayers[lobbyCode].includes(socket.id)) {
-        lobbyPlayers[lobbyCode].push(socket.id)
+      io.to(`lobby-${game}`).emit("lobbyChat", {
+        userId: socket.id,
+        message: "joined the lobby",
+      })
+    })
+
+    // ✅ Lobby chat
+    socket.on("chat:lobby", ({ game, message }) => {
+      io.to(`lobby-${game}`).emit("lobbyChat", {
+        userId: socket.id,
+        message,
+      })
+    })
+
+    // ✅ Matchmaking logic
+    socket.on("findMatch", (game: string) => {
+      const players = gameLobbies[game] || []
+      const opponent = players.find((id) => id !== socket.id)
+
+      if (opponent) {
+        const matchRoom = `match-${socket.id}-${opponent}`
+
+        // Save and join match room
+        ongoingMatches[matchRoom] = [socket.id, opponent]
+        socket.join(matchRoom)
+        io.sockets.sockets.get(opponent)?.join(matchRoom)
+
+        // Notify both players
+        io.to(matchRoom).emit("matchFound", {
+          room: matchRoom,
+          players: [socket.id, opponent],
+        })
+
+        // Remove matched players from lobby
+        gameLobbies[game] = players.filter((id) => id !== socket.id && id !== opponent)
+      } else {
+        socket.emit("lobbyChat", {
+          userId: "System",
+          message: "Waiting for an opponent...",
+        })
       }
-
-      // Assign symbol: first = 'X', second = 'O'
-      const playerIndex = lobbyPlayers[lobbyCode].indexOf(socket.id)
-      const symbol = playerIndex === 0 ? 'X' : 'O'
-
-      socket.emit("assignSymbol", symbol)
-
-      io.to(lobbyCode).emit("userJoined", socket.id)
     })
 
-    socket.on("chat", ({ lobbyCode, message }) => {
-      io.to(lobbyCode).emit("chat", { userId: socket.id, message })
+    // ✅ Chat inside private match
+    socket.on("chat:private", ({ room, message }) => {
+      io.to(room).emit("chat:private", {
+        userId: socket.id,
+        message,
+      })
     })
 
-    socket.on("tictactoe-move", ({ lobbyCode, index, player }) => {
-      io.to(lobbyCode).emit("tictactoe-move", { index, player })
+    // ✅ Game move (like Tic Tac Toe)
+    socket.on("tictactoe-move", ({ room, index, player }) => {
+      io.to(room).emit("tictactoe-move", { index, player })
     })
 
-    socket.on("tictactoe-reset", ({ lobbyCode }) => {
-      io.to(lobbyCode).emit("tictactoe-reset")
+    socket.on("tictactoe-reset", ({ room }) => {
+      io.to(room).emit("tictactoe-reset")
     })
 
+    // ✅ Handle disconnect
     socket.on("disconnect", () => {
       console.log(`🔴 ${socket.id} disconnected`)
 
-      // Remove socket from all lobbies it's in
-      for (const [lobbyCode, players] of Object.entries(lobbyPlayers)) {
-        const i = players.indexOf(socket.id)
-        if (i !== -1) {
-          players.splice(i, 1)
-          io.to(lobbyCode).emit("userLeft", socket.id)
-        }
-        // Optionally clean up empty lobbies
-        if (players.length === 0) {
-          delete lobbyPlayers[lobbyCode]
+      for (const game in gameLobbies) {
+        gameLobbies[game] = gameLobbies[game].filter((id) => id !== socket.id)
+        io.to(`lobby-${game}`).emit("lobbyChat", {
+          userId: "System",
+          message: `${socket.id} left the lobby`,
+        })
+      }
+
+      for (const room in ongoingMatches) {
+        const players = ongoingMatches[room]
+        if (players.includes(socket.id)) {
+          io.to(room).emit("chat:private", {
+            userId: "System",
+            message: `${socket.id} disconnected from the match.`,
+          })
+          delete ongoingMatches[room]
         }
       }
     })
