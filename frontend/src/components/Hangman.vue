@@ -1,25 +1,37 @@
 <template>
     <div class="hangman">
-        <h3>Hangman</h3>
-        <div v-if="role === 'setter'">
-            <el-input v-model="wordToSet" placeholder="Enter word" />
-            <el-button @click="setWord">Set Word</el-button>
+        <h2 class="game-title">🪓 Hangman</h2>
+
+        <div v-if="role === 'setter'" class="setter-panel">
+            <p class="role-label">You're the <strong>Setter</strong></p>
+            <div class="input-group">
+                <el-input v-model="wordToSet" placeholder="Enter word to set" clearable />
+                <el-button type="primary" @click="setWord" :disabled="!wordToSet.trim()">Set Word</el-button>
+            </div>
+
         </div>
 
-        <div v-else-if="role === 'guesser'">
-            <p>Word: {{ revealed.join(' ') }}</p>
-            <p>Guessed: {{ guessed.join(', ') }}</p>
-            <p>Remaining Guesses: {{ remainingGuesses }}</p>
-            <el-input v-model="letter" maxlength="1" placeholder="Guess letter" @keyup.enter="guessLetter"
-                :disabled="!wordSet" />
+
+        <div v-else-if="role === 'guesser'" class="guesser-panel">
+            <p class="role-label">You're the <strong>Guesser</strong></p>
+            <div class="game-info">
+                <p><strong>Word:</strong> <span class="revealed">{{ revealed.join(' ') }}</span></p>
+                <p><strong>Guessed Letters:</strong> {{ guessed.join(', ') || '-' }}</p>
+                <p><strong>Remaining Guesses:</strong> {{ remainingGuesses }}</p>
+            </div>
+            <el-input v-model="letter" maxlength="1" placeholder="Type a letter" @keyup.enter="guessLetter"
+                :disabled="!wordSet || result" class="input-box" />
         </div>
+
         <pre class="hangman-drawing">{{ hangmanDrawing }}</pre>
-        <el-button type="success" v-if="result" @click="playAgain" style="margin-top: 10px">
+
+        <el-button type="success" v-if="result" @click="playAgain" class="play-again-btn">
             🔁 Play Again
         </el-button>
 
-        <p v-if="result">🏁 {{ result === 'guesser' ? 'Guesser wins!' : `Setter wins! The word was:
-            ${revealed.join('')}` }}</p>
+        <p v-if="result" class="result-message">
+            🏁 {{ result === 'guesser' ? 'Guesser wins!' : `Setter wins! The word was: ${revealed.join('')}` }}
+        </p>
     </div>
 </template>
 
@@ -121,3 +133,80 @@ function guessLetter() {
     }
 }
 </script>
+
+<style scoped>
+.hangman {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 30px 20px;
+    text-align: center;
+    background-color: var(--el-bg-color-overlay, #fff);
+    border-radius: 16px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+}
+
+.game-title {
+    font-size: 28px;
+    margin-bottom: 24px;
+    color: var(--el-text-color-primary);
+}
+
+.role-label {
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: var(--el-text-color-secondary);
+}
+
+.input-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 16px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.input-box {
+    margin-bottom: 16px;
+    width: 100%;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.hangman-drawing {
+    font-family: monospace;
+    font-size: 20px;
+    line-height: 24px;
+    margin: 20px auto;
+    white-space: pre;
+    color: var(--el-color-danger);
+}
+
+.guesser-panel .game-info {
+    text-align: left;
+    max-width: 400px;
+    margin: 0 auto 20px;
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.revealed {
+    font-family: monospace;
+    letter-spacing: 4px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.result-message {
+    font-weight: bold;
+    margin-top: 10px;
+    color: var(--el-color-success);
+}
+
+.play-again-btn {
+    margin-top: 20px;
+}
+</style>
