@@ -61,6 +61,11 @@ onMounted(() => {
         })
     })
 
+    socket.on('matchFound', ({ room }) => {
+        console.log('✅ Match found, navigating to room:', room)
+        router.push(`/match/${room}`)
+    })
+
 
 })
 

@@ -41,6 +41,14 @@ const routes = [
             const user = sessionStorage.getItem('user') || sessionStorage.getItem('guestUser')
             user ? next() : next('/login')
         }
+    },
+    {
+        path: '/match/:room',
+        component: () => import('../views/MatchRoom.vue'), // Or TicTacToe.vue
+        beforeEnter: (_to: RouteLocationNormalized, _from: RouteLocationNormalized, next: NavigationGuardNext) => {
+            const user = sessionStorage.getItem('user') || sessionStorage.getItem('guestUser')
+            user ? next() : next('/login')
+        }
     }
 ]
 
