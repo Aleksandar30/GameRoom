@@ -1,8 +1,8 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
 import { User } from "./entities/User";
-import { Lobby } from "./entities/Lobby";
-import { LobbyPlayer } from "./entities/LobbyPlayer";
+// import { Lobby } from "./entities/Lobby";
+// import { LobbyPlayer } from "./entities/LobbyPlayer";
 
 export const AppDataSource = new DataSource({
   type: "mysql",
@@ -12,6 +12,7 @@ export const AppDataSource = new DataSource({
   password: "",
   database: "game_room",
   synchronize: true,
+  // dropSchema: true, // Koristi se za resetovanje baze
   logging: false,
-  entities: [User, Lobby, LobbyPlayer],
+  entities: [User],
 });
