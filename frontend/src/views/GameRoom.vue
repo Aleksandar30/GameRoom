@@ -2,12 +2,15 @@
     <div class="lobby">
         <h2>{{ gameTitle }} Lobby</h2>
 
-        <div class="chat">
-            <div v-for="(msg, i) in messages" :key="i">{{ msg }}</div>
+        <div class="chat" ref="chatBox">
+            <div v-for="(msg, i) in messages" :key="i" :class="msg.user === username ? 'my-message' : 'other-message'">
+                [{{ msg.time }}] <strong>{{ msg.user }}</strong>: {{ msg.message }}
+            </div>
         </div>
-
-        <el-input v-model="newMessage" placeholder="Say something..." @keyup.enter="sendMessage" class="chat-input" />
-        <el-button @click="sendMessage">Send</el-button>
+        <div class="chat-input-row">
+            <el-input v-model="newMessage" placeholder="Say something..." class="chat-input" />
+            <el-button @click="sendMessage">Send</el-button>
+        </div>
 
         <el-divider />
 
@@ -18,32 +21,54 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { io, Socket } from 'socket.io-client'
 
 const route = useRoute()
 const router = useRouter()
+const chatBox = ref<HTMLElement | null>(null)
+
 
 const game = route.params.game as string
 const gameTitle = game.charAt(0).toUpperCase() + game.slice(1)
 
+const user = JSON.parse(sessionStorage.getItem('user') || '{}')
+const username = user.username || 'Guest'
+
 const socket: Socket = io('http://localhost:3000')
 
-const messages = ref<string[]>([])
+const messages = ref<{ time: string; user: string; message: string }[]>([])
 const newMessage = ref('')
 
 onMounted(() => {
-    socket.emit('joinGameLobby', game)
+    socket.emit('joinGameLobby', { game, username })
 
-    socket.on('lobbyChat', ({ userId, message }) => {
-        messages.value.push(`💬 ${userId}: ${message}`)
+    socket.off('lobbyChat')
+
+    socket.on('lobbyChat', (data: { user: string; message: string }) => {
+        messages.value.push({
+            time: getCurrentTime(),
+            user: data.user || '???',
+            message: data.message
+        })
+
+        nextTick(() => {
+            if (chatBox.value) {
+                chatBox.value.scrollTop = chatBox.value.scrollHeight
+            }
+        })
     })
 
-    socket.on('matchFound', ({ room }) => {
-        router.push(`/match/${room}`)
-    })
+
 })
+
+
+
+function getCurrentTime(): string {
+    const now = new Date()
+    return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
 
 function sendMessage() {
     if (!newMessage.value.trim()) return
@@ -70,10 +95,29 @@ function findMatch() {
     border: 1px solid #ccc;
     padding: 10px;
     margin-bottom: 10px;
+    text-align: left;
+    font-family: monospace;
+    scroll-behavior: smooth;
 }
 
 .chat-input {
-    width: 100%;
-    margin: 10px 0;
+    flex: 1;
+    margin: 0;
+}
+
+.my-message {
+    color: #409eff;
+    /* Element Plus primary blue */
+    font-weight: bold;
+}
+
+.other-message {
+    color: #a09e9e;
+}
+
+.chat-input-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 0;
 }
 </style>

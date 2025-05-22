@@ -2,30 +2,31 @@ import { Server } from "socket.io"
 
 const gameLobbies: Record<string, string[]> = {}
 const ongoingMatches: Record<string, [string, string]> = {}
+const socketToUsername: Record<string, string> = {}
+
 
 export function setupSocket(io: Server) {
   io.on("connection", (socket) => {
     console.log(`🟢 ${socket.id} connected`)
 
     // ✅ Join shared game lobby
-    socket.on("joinGameLobby", (game: string) => {
+    socket.on("joinGameLobby", ({ game, username }) => {
       socket.join(`lobby-${game}`)
-      if (!gameLobbies[game]) gameLobbies[game] = []
-      if (!gameLobbies[game].includes(socket.id)) {
-        gameLobbies[game].push(socket.id)
-      }
+      socketToUsername[socket.id] = username
 
       io.to(`lobby-${game}`).emit("lobbyChat", {
-        userId: socket.id,
-        message: "joined the lobby",
+        user: username,
+        message: "joined the lobby"
       })
     })
 
+
     // ✅ Lobby chat
     socket.on("chat:lobby", ({ game, message }) => {
+      const username = socketToUsername[socket.id] || "Unknown"
       io.to(`lobby-${game}`).emit("lobbyChat", {
-        userId: socket.id,
-        message,
+        user: username,
+        message
       })
     })
 
@@ -97,6 +98,7 @@ export function setupSocket(io: Server) {
           delete ongoingMatches[room]
         }
       }
+      delete socketToUsername[socket.id]
     })
   })
 }
