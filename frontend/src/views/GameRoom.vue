@@ -24,7 +24,6 @@
 <script lang="ts" setup>
 import { ref, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { io, Socket } from 'socket.io-client'
 
 const route = useRoute()
 const router = useRouter()
@@ -37,7 +36,8 @@ const gameTitle = game.charAt(0).toUpperCase() + game.slice(1)
 const user = JSON.parse(sessionStorage.getItem('user') || '{}')
 const username = user.username || `Guest${Math.floor(Math.random() * 1_000_000)}`
 
-const socket: Socket = io('http://localhost:3000')
+import { socket } from '../socket'
+
 
 const messages = ref<{ time: string; user: string; message: string }[]>([])
 const newMessage = ref('')
@@ -78,6 +78,7 @@ function sendMessage() {
 }
 
 function findMatch() {
+    console.log('Finding match for game:', game)
     socket.emit('findMatch', game)
 }
 </script>

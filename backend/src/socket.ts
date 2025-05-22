@@ -14,6 +14,14 @@ export function setupSocket(io: Server) {
       socket.join(`lobby-${game}`)
       socketToUsername[socket.id] = username
 
+      if (!gameLobbies[game]) {
+        gameLobbies[game] = []
+      }
+
+      if (!gameLobbies[game].includes(socket.id)) {
+        gameLobbies[game].push(socket.id)
+      }
+
       io.to(`lobby-${game}`).emit("lobbyChat", {
         user: username,
         message: "joined the lobby"
@@ -32,7 +40,18 @@ export function setupSocket(io: Server) {
 
     // ✅ Matchmaking logic
     socket.on("findMatch", (game: string) => {
-      const players = gameLobbies[game] || []
+      let players = gameLobbies[game] || []
+
+      // If the player already got matched and removed, prevent retry
+      if (!players.includes(socket.id)) {
+        console.log(`⛔ ${socket.id} is not in ${game} lobby anymore.`)
+        socket.emit("lobbyChat", {
+          user: "System",
+          message: "You're already being matched or in a game."
+        })
+        return
+      }
+
       const opponent = players.find((id) => id !== socket.id)
 
       if (opponent) {
@@ -46,15 +65,19 @@ export function setupSocket(io: Server) {
         // Notify both players
         io.to(matchRoom).emit("matchFound", {
           room: matchRoom,
-          players: [socket.id, opponent],
+          players: [
+            { id: socket.id, username: socketToUsername[socket.id] || "Guest" },
+            { id: opponent, username: socketToUsername[opponent] || "Guest" }
+          ]
         })
 
-        // Remove matched players from lobby
+        // Remove matched players from the lobby
         gameLobbies[game] = players.filter((id) => id !== socket.id && id !== opponent)
+        console.log(`✅ Match created between ${socket.id} and ${opponent}`)
       } else {
         socket.emit("lobbyChat", {
-          userId: "System",
-          message: "Waiting for an opponent...",
+          user: "System",
+          message: "Waiting for an opponent..."
         })
       }
     })
@@ -83,7 +106,7 @@ export function setupSocket(io: Server) {
       for (const game in gameLobbies) {
         gameLobbies[game] = gameLobbies[game].filter((id) => id !== socket.id)
         io.to(`lobby-${game}`).emit("lobbyChat", {
-          userId: "System",
+          user: "System",
           message: `${socket.id} left the lobby`,
         })
       }
