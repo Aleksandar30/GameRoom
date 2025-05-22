@@ -18,6 +18,9 @@
         <el-button :type="isMatching ? 'danger' : 'primary'" @click="isMatching ? cancelMatch() : findMatch()">
             {{ isMatching ? '❌ Cancel Match' : '🎯 Find Match' }}
         </el-button>
+        <el-button type="warning" plain @click="leaveLobby">
+            🔙 Back to Game Selection
+        </el-button>
     </div>
 </template>
 
@@ -82,7 +85,11 @@ onMounted(() => {
 
 })
 
-
+function leaveLobby() {
+    cancelMatch()
+    socket.emit('leaveLobby', { game, username })
+    router.push('/lobby') // or '/' if that’s your game selection page
+}
 
 function getCurrentTime(): string {
     const now = new Date()

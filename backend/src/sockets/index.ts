@@ -35,6 +35,20 @@ export function setupSocket(io: Server) {
       })
     })
 
+    socket.on("leaveLobby", ({ game, username }) => {
+      socket.leave(`lobby-${game}`)
+
+      if (gameLobbies[game]) {
+        gameLobbies[game] = gameLobbies[game].filter(id => id !== socket.id)
+      }
+
+      io.to(`lobby-${game}`).emit("lobbyChat", {
+        user: "System",
+        message: `${username} left the lobby`
+      })
+    })
+
+
 
     // ✅ Lobby chat
     socket.on("chat:lobby", ({ game, message }) => {

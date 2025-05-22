@@ -6,8 +6,6 @@
             <span class="vs">VS</span>
             <span class="player">{{ player2 }}</span>
         </div>
-
-
         <TicTacToe :room="room" :socket="socket" />
     </div>
     <el-button type="danger" @click="endGame" class="end-button">
