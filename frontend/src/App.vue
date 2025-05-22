@@ -3,24 +3,8 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
-import { io, Socket } from 'socket.io-client'
 
 
-
-const socket = io('http://localhost:3000') // backend address
-const joined = ref(false)
-const lobbyCode = ref('')
-const playerSymbol = ref<'X' | 'O' | null>(null)
-
-function onJoin(code: string) {
-  lobbyCode.value = code
-  joined.value = true
-  socket.emit('joinLobby', code)
-  socket.on('assignSymbol', (symbol: 'X' | 'O') => {
-    playerSymbol.value = symbol
-  })
-}
 </script>
 
 <style scoped>
