@@ -8,7 +8,8 @@
             </div>
         </div>
         <div class="chat-input-row">
-            <el-input v-model="newMessage" placeholder="Say something..." class="chat-input" />
+            <el-input v-model="newMessage" placeholder="Say something..." class="chat-input"
+                @keyup.enter="sendMessage" />
             <el-button @click="sendMessage">Send</el-button>
         </div>
 
@@ -34,7 +35,7 @@ const game = route.params.game as string
 const gameTitle = game.charAt(0).toUpperCase() + game.slice(1)
 
 const user = JSON.parse(sessionStorage.getItem('user') || '{}')
-const username = user.username || 'Guest'
+const username = user.username || `Guest${Math.floor(Math.random() * 1_000_000)}`
 
 const socket: Socket = io('http://localhost:3000')
 
