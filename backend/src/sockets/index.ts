@@ -6,6 +6,7 @@ const socketToUsername: Record<string, string> = {}
 const matchQueue: Record<string, string[]> = {}
 import { setupTicTacToe } from './games/tictactoe'
 import { setupHangman } from "./games/hangman"
+import { setupQuiz } from "./games/quiz"
 
 
 
@@ -16,6 +17,7 @@ export function setupSocket(io: Server) {
 
     setupTicTacToe(socket, io, socketToUsername)
     setupHangman(socket, io)
+    setupQuiz(socket, io)
 
 
     // ✅ Join shared game lobby

@@ -8,7 +8,7 @@
         </div>
         <TicTacToe v-if="game === 'tictactoe'" :room="room" :socket="socket" />
         <Hangman v-else-if="game === 'hangman'" :room="room" :socket="socket" />
-        <Quiz v-else-if="game === 'quiz'" :room="room" :socket="socket" />
+        <Quiz v-else-if="game === 'quiz'" :room="room" :username="username" :socket="socket" />
 
     </div>
     <div class="chat" ref="chatBox">
