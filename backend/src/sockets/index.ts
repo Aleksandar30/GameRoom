@@ -5,6 +5,7 @@ const ongoingMatches: Record<string, [string, string]> = {}
 const socketToUsername: Record<string, string> = {}
 const matchQueue: Record<string, string[]> = {}
 import { setupTicTacToe } from './games/tictactoe'
+import { setupHangman } from "./games/hangman"
 
 
 
@@ -14,6 +15,7 @@ export function setupSocket(io: Server) {
     console.log(`🟢 ${socket.id} connected`)
 
     setupTicTacToe(socket, io, socketToUsername)
+    setupHangman(socket, io)
 
 
     // ✅ Join shared game lobby
@@ -123,8 +125,9 @@ export function setupSocket(io: Server) {
 
     // ✅ Chat inside private match
     socket.on("chat:private", ({ room, message }) => {
+      const username = socketToUsername[socket.id] || socket.id
       io.to(room).emit("chat:private", {
-        userId: socket.id,
+        user: username, // ✅ Correct name
         message,
       })
     })
