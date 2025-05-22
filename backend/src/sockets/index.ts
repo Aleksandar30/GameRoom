@@ -4,12 +4,17 @@ const gameLobbies: Record<string, string[]> = {}
 const ongoingMatches: Record<string, [string, string]> = {}
 const socketToUsername: Record<string, string> = {}
 const matchQueue: Record<string, string[]> = {}
+import { setupTicTacToe } from './games/tictactoe'
+
 
 
 
 export function setupSocket(io: Server) {
   io.on("connection", (socket) => {
     console.log(`🟢 ${socket.id} connected`)
+
+    setupTicTacToe(socket, io, socketToUsername)
+
 
     // ✅ Join shared game lobby
     socket.on("joinGameLobby", ({ game, username }) => {

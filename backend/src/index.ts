@@ -2,7 +2,7 @@ import express from "express"
 import http from "http"
 import { Server } from "socket.io"
 import { AppDataSource } from "./data-source"
-import { setupSocket } from "./socket"
+import { setupSocket } from "./sockets"
 import dotenv from "dotenv"
 import cors from "cors"
 import authRoutes from "./routes/auth" // 👈 add this line

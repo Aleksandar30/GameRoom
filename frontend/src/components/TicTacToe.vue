@@ -1,13 +1,15 @@
 <template>
   <div class="game">
-    <h3>Tic Tac Toe – Lobby: {{ lobbyCode }}</h3>
+    <p>You are playing as <strong>{{ playerSymbol }}</strong></p>
     <p>Current Turn: {{ currentTurn }}</p>
     <div class="board">
-      <div v-for="(cell, index) in board" :key="index" class="cell" @click="makeMove(index)">
+      <div v-for="(cell, index) in board" :key="index" class="cell" @click="makeMove(index)"
+        :class="{ x: cell === 'X', o: cell === 'O' }">
         {{ cell }}
       </div>
     </div>
-    <p v-if="winner">🎉 Winner: {{ winner }}</p>
+    <p v-if="winner && winner !== 'Tie'">🎉 Winner: {{ usernames[winner as 'X' | 'O'] }}</p>
+    <p v-else-if="winner === 'Tie'">🤝 It's a tie!</p>
     <button @click="resetGame">Reset Game</button>
   </div>
 </template>
@@ -18,13 +20,14 @@ import type { Socket } from 'socket.io-client'
 
 const props = defineProps<{
   socket: Socket
-  lobbyCode: string
-  playerSymbol: 'X' | 'O' | null
+  room: string
 }>()
 
 const board = ref(Array(9).fill(''))
 const currentTurn = ref<'X' | 'O'>('X') // default is X's turn
 const winner = ref('')
+const usernames = ref<{ X: string; O: string }>({ X: 'Player X', O: 'Player O' })
+
 
 // 🧠 Win combinations
 const winPatterns = [
@@ -33,11 +36,37 @@ const winPatterns = [
   [0, 4, 8], [2, 4, 6]             // diagonals
 ]
 
+const playerSymbol = ref<'X' | 'O' | null>(null)
+
+onMounted(() => {
+  props.socket.emit('tictactoe-join', { room: props.room })
+
+  props.socket.off('tictactoe-start')
+  props.socket.off('tictactoe-move')
+  props.socket.off('tictactoe-reset')
+
+  props.socket.on('tictactoe-start', ({ symbol, currentTurn: turn, usernames: nameMap }) => {
+    playerSymbol.value = symbol
+    currentTurn.value = turn
+    usernames.value = nameMap
+  })
+
+  props.socket.on('tictactoe-move', ({ index, player }) => {
+    applyMove(index, player)
+  })
+
+  props.socket.on('tictactoe-reset', () => {
+    board.value = Array(9).fill('')
+    currentTurn.value = 'X'
+    winner.value = ''
+  })
+})
+
 function makeMove(index: number) {
   if (board.value[index] || winner.value) return
-  if (props.playerSymbol !== currentTurn.value) return // 🛑 Not your turn
+  if (playerSymbol.value !== currentTurn.value) return
   props.socket.emit('tictactoe-move', {
-    lobbyCode: props.lobbyCode,
+    room: props.room,
     index,
     player: currentTurn.value
   })
@@ -69,20 +98,9 @@ function resetGame() {
   board.value = Array(9).fill('')
   currentTurn.value = 'X'
   winner.value = ''
-  props.socket.emit('tictactoe-reset', { lobbyCode: props.lobbyCode })
+  props.socket.emit('tictactoe-reset', { room: props.room })
 }
 
-onMounted(() => {
-  props.socket.on('tictactoe-move', ({ index, player }) => {
-    applyMove(index, player)
-  })
-
-  props.socket.on('tictactoe-reset', () => {
-    board.value = Array(9).fill('')
-    currentTurn.value = 'X'
-    winner.value = ''
-  })
-})
 </script>
 
 <style scoped>
@@ -107,5 +125,17 @@ onMounted(() => {
   text-align: center;
   cursor: pointer;
   border: 1px solid #ccc;
+}
+
+.cell.x {
+  color: #f56c6c;
+  /* red for X */
+  font-weight: bold;
+}
+
+.cell.o {
+  color: #67c23a;
+  /* green for O */
+  font-weight: bold;
 }
 </style>

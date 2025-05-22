@@ -5,10 +5,7 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 import { io, Socket } from 'socket.io-client'
-import LobbyForm from './components/LobbyForm.vue'
-import LobbyChat from './components/LobbyChat.vue'
-import TicTacToe from './components/TicTacToe.vue'
-import { router } from './router'
+
 
 
 const socket = io('http://localhost:3000') // backend address

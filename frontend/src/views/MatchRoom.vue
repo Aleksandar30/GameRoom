@@ -8,7 +8,7 @@
         </div>
 
 
-        <!-- <TicTacToe :room="room" :socket="socket" /> -->
+        <TicTacToe :room="room" :socket="socket" />
     </div>
     <el-button type="danger" @click="endGame" class="end-button">
         🔚 End Game
@@ -21,6 +21,7 @@ import { useRouter } from 'vue-router'
 import { socket } from '../socket'
 import { onMounted } from 'vue'
 import { ElMessageBox } from 'element-plus'
+import TicTacToe from '../components/TicTacToe.vue'
 
 const route = useRoute()
 const room = route.params.room as string
