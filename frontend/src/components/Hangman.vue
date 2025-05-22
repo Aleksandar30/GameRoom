@@ -14,7 +14,9 @@
                 :disabled="!wordSet" />
         </div>
         <pre class="hangman-drawing">{{ hangmanDrawing }}</pre>
-
+        <el-button type="success" v-if="result" @click="playAgain" style="margin-top: 10px">
+            🔁 Play Again
+        </el-button>
 
         <p v-if="result">🏁 {{ result === 'guesser' ? 'Guesser wins!' : `Setter wins! The word was:
             ${revealed.join('')}` }}</p>
@@ -36,6 +38,11 @@ const letter = ref('')
 const result = ref<string | null>(null)
 const wordSet = ref(false)
 
+function playAgain() {
+    console.log('Play again')
+    props.socket.emit('hangman-reset', { room: props.room })
+}
+
 const hangmanStages = [
     '',
     'O',
@@ -50,11 +57,25 @@ const hangmanDrawing = computed(() => hangmanStages[6 - remainingGuesses.value])
 
 
 onMounted(() => {
+    props.socket.off('hangman-role')
+    props.socket.off('hangman-start')
+    props.socket.off('hangman-update')
+    props.socket.off('hangman-end')
+    props.socket.off('hangman-reset')
+
     props.socket.emit('hangman-join', { room: props.room })
 
     props.socket.on('hangman-role', ({ role: r }) => {
         role.value = r
+        wordToSet.value = ''
+        guessed.value = []
+        revealed.value = []
+        remainingGuesses.value = 6
+        letter.value = ''
+        result.value = null
+        wordSet.value = false
     })
+
 
     props.socket.on('hangman-start', ({ guessed: g, remainingGuesses: r, revealed: rWord }) => {
         guessed.value = g
@@ -74,6 +95,16 @@ onMounted(() => {
         if (res === 'setter' && word) {
             revealed.value = word.split('')
         }
+    })
+
+    props.socket.on('hangman-reset', () => {
+        wordToSet.value = ''
+        guessed.value = []
+        revealed.value = []
+        remainingGuesses.value = 6
+        letter.value = ''
+        result.value = null
+        wordSet.value = false
     })
 })
 

@@ -65,16 +65,35 @@ export function setupHangman(socket: Socket, io: Server) {
 
         if (!revealed.includes('_')) {
             io.to(room).emit('hangman-end', { result: 'guesser' })
-            delete hangmanRooms[room]
         } else if (game.remainingGuesses === 0) {
             io.to(room).emit('hangman-end', { result: 'setter', word: game.word })
-            delete hangmanRooms[room]
         }
+
     })
 
 
     socket.on('hangman-reset', ({ room }) => {
-        delete hangmanRooms[room]
-        io.to(room).emit('hangman-reset')
+        const game = hangmanRooms[room]
+        if (!game) return
+
+
+        const [currentSetter, currentGuesser] = game.players
+        const newSetter = game.turn // previously guessing
+        const newGuesser = game.players.find(id => id !== newSetter)!
+
+        // Reset game state
+        hangmanRooms[room] = {
+            word: '',
+            guessed: [],
+            remainingGuesses: 6,
+            players: [newSetter, newGuesser],
+            turn: newGuesser, // new guesser will guess
+            isWordSet: false
+        }
+
+        io.to(newSetter).emit('hangman-role', { role: 'setter' })
+        io.to(newGuesser).emit('hangman-role', { role: 'guesser' })
+
+        io.to(room).emit('hangman-reset') // triggers UI reset
     })
 }
