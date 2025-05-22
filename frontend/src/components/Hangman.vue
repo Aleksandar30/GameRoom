@@ -10,8 +10,11 @@
             <p>Word: {{ revealed.join(' ') }}</p>
             <p>Guessed: {{ guessed.join(', ') }}</p>
             <p>Remaining Guesses: {{ remainingGuesses }}</p>
-            <el-input v-model="letter" maxlength="1" placeholder="Guess letter" @keyup.enter="guessLetter" />
+            <el-input v-model="letter" maxlength="1" placeholder="Guess letter" @keyup.enter="guessLetter"
+                :disabled="!wordSet" />
         </div>
+        <pre class="hangman-drawing">{{ hangmanDrawing }}</pre>
+
 
         <p v-if="result">🏁 {{ result === 'guesser' ? 'Guesser wins!' : `Setter wins! The word was:
             ${revealed.join('')}` }}</p>
@@ -19,7 +22,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import type { Socket } from 'socket.io-client'
 
 const props = defineProps<{ socket: Socket, room: string }>()
@@ -32,6 +35,18 @@ const remainingGuesses = ref(6)
 const letter = ref('')
 const result = ref<string | null>(null)
 const wordSet = ref(false)
+
+const hangmanStages = [
+    '',
+    'O',
+    'O\n|',
+    'O\n/|',
+    'O\n/|\\',
+    'O\n/|\\\n/',
+    'O\n/|\\\n/ \\'
+]
+
+const hangmanDrawing = computed(() => hangmanStages[6 - remainingGuesses.value])
 
 
 onMounted(() => {
