@@ -3,6 +3,8 @@ import { Server } from "socket.io"
 const gameLobbies: Record<string, string[]> = {}
 const ongoingMatches: Record<string, [string, string]> = {}
 const socketToUsername: Record<string, string> = {}
+const matchQueue: Record<string, string[]> = {}
+
 
 
 export function setupSocket(io: Server) {
@@ -40,44 +42,46 @@ export function setupSocket(io: Server) {
 
     // ✅ Matchmaking logic
     socket.on("findMatch", (game: string) => {
-      let players = gameLobbies[game] || []
+      if (!matchQueue[game]) matchQueue[game] = []
 
-      // If the player already got matched and removed, prevent retry
-      if (!players.includes(socket.id)) {
-        console.log(`⛔ ${socket.id} is not in ${game} lobby anymore.`)
-        socket.emit("lobbyChat", {
-          user: "System",
-          message: "You're already being matched or in a game."
-        })
-        return
+      // Prevent duplicates
+      if (!matchQueue[game].includes(socket.id)) {
+        matchQueue[game].push(socket.id)
       }
 
-      const opponent = players.find((id) => id !== socket.id)
+      // Only match if 2+ players are waiting
+      if (matchQueue[game].length >= 2) {
+        const [player1, player2] = matchQueue[game].splice(0, 2)
 
-      if (opponent) {
-        const matchRoom = `match-${socket.id}-${opponent}`
+        const matchRoom = `match-${player1}-${player2}`
+        ongoingMatches[matchRoom] = [player1, player2]
 
-        // Save and join match room
-        ongoingMatches[matchRoom] = [socket.id, opponent]
-        socket.join(matchRoom)
-        io.sockets.sockets.get(opponent)?.join(matchRoom)
+        io.sockets.sockets.get(player1)?.join(matchRoom)
+        io.sockets.sockets.get(player2)?.join(matchRoom)
 
-        // Notify both players
         io.to(matchRoom).emit("matchFound", {
           room: matchRoom,
           players: [
-            { id: socket.id, username: socketToUsername[socket.id] || "Guest" },
-            { id: opponent, username: socketToUsername[opponent] || "Guest" }
+            { id: player1, username: socketToUsername[player1] || "Guest" },
+            { id: player2, username: socketToUsername[player2] || "Guest" }
           ]
         })
 
-        // Remove matched players from the lobby
-        gameLobbies[game] = players.filter((id) => id !== socket.id && id !== opponent)
-        console.log(`✅ Match created between ${socket.id} and ${opponent}`)
+        console.log(`✅ Match created between ${player1} and ${player2}`)
       } else {
         socket.emit("lobbyChat", {
           user: "System",
           message: "Waiting for an opponent..."
+        })
+      }
+    })
+
+    socket.on("cancelMatch", (game: string) => {
+      if (matchQueue[game]) {
+        matchQueue[game] = matchQueue[game].filter(id => id !== socket.id)
+        socket.emit("lobbyChat", {
+          user: "System",
+          message: "You left the matchmaking queue."
         })
       }
     })
@@ -120,6 +124,9 @@ export function setupSocket(io: Server) {
           })
           delete ongoingMatches[room]
         }
+      }
+      for (const game in matchQueue) {
+        matchQueue[game] = matchQueue[game].filter(id => id !== socket.id)
       }
       delete socketToUsername[socket.id]
     })

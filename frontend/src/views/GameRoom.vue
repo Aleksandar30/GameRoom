@@ -15,8 +15,8 @@
 
         <el-divider />
 
-        <el-button type="primary" @click="findMatch">
-            🎯 Find Match
+        <el-button :type="isMatching ? 'danger' : 'primary'" @click="isMatching ? cancelMatch() : findMatch()">
+            {{ isMatching ? '❌ Cancel Match' : '🎯 Find Match' }}
         </el-button>
     </div>
 </template>
@@ -35,6 +35,8 @@ const gameTitle = game.charAt(0).toUpperCase() + game.slice(1)
 
 const user = JSON.parse(sessionStorage.getItem('user') || '{}')
 const username = user.username || `Guest${Math.floor(Math.random() * 1_000_000)}`
+const isMatching = ref(false)
+
 
 import { socket } from '../socket'
 
@@ -63,6 +65,8 @@ onMounted(() => {
 
     socket.on('matchFound', ({ room }) => {
         console.log('✅ Match found, navigating to room:', room)
+        isMatching.value = false
+
         router.push(`/match/${room}`)
     })
 
@@ -83,10 +87,21 @@ function sendMessage() {
 }
 
 function findMatch() {
-    console.log('Finding match for game:', game)
-    socket.emit('findMatch', game)
+    if (!isMatching.value) {
+        console.log('🔍 Searching for a match...')
+        isMatching.value = true
+        socket.emit('findMatch', game)
+    }
+}
+
+function cancelMatch() {
+    console.log('❌ Cancelling matchmaking...')
+    isMatching.value = false
+    socket.emit('cancelMatch', game)
 }
 </script>
+
+
 
 <style scoped>
 .lobby {
