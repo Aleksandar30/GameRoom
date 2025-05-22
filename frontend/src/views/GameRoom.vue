@@ -63,13 +63,19 @@ onMounted(() => {
         })
     })
 
-    socket.on('matchFound', ({ room }) => {
+    socket.on('matchFound', ({ room, players }) => {
         console.log('✅ Match found, navigating to room:', room)
+        console.log('👥 Players:', players)
+
         isMatching.value = false
 
         router.push({
             path: `/match/${room}`,
-            query: { game }
+            query: {
+                game,
+                p1: players[0].username,
+                p2: players[1].username
+            }
         })
     })
 

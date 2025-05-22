@@ -1,7 +1,11 @@
 <template>
     <div class="match-room">
         <h2>🕹️ Match Started!</h2>
-        <p>Match ID: {{ room }}</p>
+        <div class="vs-box">
+            <span class="player">{{ player1 }}</span>
+            <span class="vs">VS</span>
+            <span class="player">{{ player2 }}</span>
+        </div>
 
 
         <!-- <TicTacToe :room="room" :socket="socket" /> -->
@@ -21,6 +25,8 @@ import { ElMessageBox } from 'element-plus'
 const route = useRoute()
 const room = route.params.room as string
 const game = route.query.game as string
+const player1 = route.query.p1 as string
+const player2 = route.query.p2 as string
 
 const router = useRouter()
 
@@ -46,5 +52,23 @@ function endGame() {
 <style scoped>
 .end-button {
     margin-top: 20px;
+}
+
+.vs-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    font-size: 1.5em;
+    margin-top: 20px;
+}
+
+.player {
+    font-weight: bold;
+}
+
+.vs {
+    color: #f56c6c;
+    font-weight: bold;
 }
 </style>
