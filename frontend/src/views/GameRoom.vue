@@ -67,7 +67,10 @@ onMounted(() => {
         console.log('✅ Match found, navigating to room:', room)
         isMatching.value = false
 
-        router.push(`/match/${room}`)
+        router.push({
+            path: `/match/${room}`,
+            query: { game }
+        })
     })
 
 

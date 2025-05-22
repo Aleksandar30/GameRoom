@@ -76,6 +76,22 @@ export function setupSocket(io: Server) {
       }
     })
 
+    socket.on("leaveMatch", ({ room }) => {
+      socket.leave(room)
+
+      const players = ongoingMatches[room]
+      if (players) {
+        const otherPlayer = players.find(id => id !== socket.id)
+        if (otherPlayer) {
+          io.to(otherPlayer).emit("matchEnded", {
+            reason: "Your opponent has left the game."
+          })
+        }
+      }
+
+      delete ongoingMatches[room]
+    })
+
     socket.on("cancelMatch", (game: string) => {
       if (matchQueue[game]) {
         matchQueue[game] = matchQueue[game].filter(id => id !== socket.id)
@@ -122,6 +138,19 @@ export function setupSocket(io: Server) {
             userId: "System",
             message: `${socket.id} disconnected from the match.`,
           })
+          delete ongoingMatches[room]
+        }
+      }
+
+      for (const room in ongoingMatches) {
+        const players = ongoingMatches[room]
+        if (players.includes(socket.id)) {
+          const otherPlayer = players.find(id => id !== socket.id)
+          if (otherPlayer) {
+            io.to(otherPlayer).emit("matchEnded", {
+              reason: "Your opponent disconnected."
+            })
+          }
           delete ongoingMatches[room]
         }
       }
