@@ -8,6 +8,7 @@
         </div>
         <TicTacToe v-if="game === 'tictactoe'" :room="room" :socket="socket" />
         <Hangman v-else-if="game === 'hangman'" :room="room" :socket="socket" />
+        <Quiz v-else-if="game === 'quiz'" :room="room" :socket="socket" />
 
     </div>
     <div class="chat" ref="chatBox">
@@ -33,6 +34,7 @@ import { onMounted } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import TicTacToe from '../components/TicTacToe.vue'
 import Hangman from '../components/Hangman.vue'
+import Quiz from '../components/Quiz.vue'
 import { ref, nextTick, onBeforeUnmount } from 'vue'
 
 const chatMessages = ref<{ user: string; text: string; time: string }[]>([])

@@ -16,6 +16,12 @@
                     <p>Guess the word before it’s too late</p>
                 </div>
             </el-card>
+            <el-card class="game-card" shadow="hover" @click="goToRoom('quiz')">
+                <div class="card-content">
+                    <h3>Quiz</h3>
+                    <p>Test your knoweladge agains live opponents</p>
+                </div>
+            </el-card>
         </div>
 
         <el-button type="danger" plain @click="logout" class="logout-btn">
