@@ -177,3 +177,6 @@ seedQuestions().catch(err => {
     console.error("Seeder error:", err)
     process.exit(1)
 })
+
+
+// npx ts - node src / seeds / quizSeeder.ts
