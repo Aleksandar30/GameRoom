@@ -169,7 +169,6 @@ async function seedQuestions() {
     const repo = AppDataSource.getRepository(Question)
     await repo.clear() // Optional: remove old data
     await repo.save(sampleQuestions)
-    console.log("✅ 20 questions inserted!")
     process.exit(0)
 }
 
