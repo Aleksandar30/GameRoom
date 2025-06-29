@@ -1,5 +1,7 @@
 import { AppDataSource } from "../data-source"
 import { Question } from "../entities/Question"
+import { User } from "../entities/User"
+import bcrypt from "bcrypt"
 
 const sampleQuestions: Partial<Question>[] = [
     {
@@ -164,16 +166,46 @@ const sampleQuestions: Partial<Question>[] = [
     }
 ]
 
-async function seedQuestions() {
+const sampleUsers: Partial<User>[] = [
+    {
+        username: "admin",
+        email: "admin@example.com",
+        password: "password" // hash if needed
+    },
+    {
+        username: "player1",
+        email: "player1@example.com",
+        password: "password" // hash if needed
+    }
+]
+async function seedApp() {
     await AppDataSource.initialize()
-    const repo = AppDataSource.getRepository(Question)
-    await repo.clear() // Optional: remove old data
-    await repo.save(sampleQuestions)
+
+    // ✅ Seed Questions
+    const questionRepo = AppDataSource.getRepository(Question)
+    await questionRepo.clear()
+    await questionRepo.save(sampleQuestions)
+
+    // ✅ Hash passwords
+    const hashedUsers = await Promise.all(
+        sampleUsers.map(async (user) => ({
+            ...user,
+            password: await bcrypt.hash(user.password as string, 10)
+        }))
+    )
+
+    // ✅ Seed Users
+    const userRepo = AppDataSource.getRepository(User)
+    await userRepo.clear()
+    await userRepo.save(hashedUsers)
+
+    console.log("✅ Seeding complete")
     process.exit(0)
 }
 
-seedQuestions().catch(err => {
-    console.error("Seeder error:", err)
+
+seedApp().catch(err => {
+    console.error("\u274c Seeder error:", err)
     process.exit(1)
 })
 

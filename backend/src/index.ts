@@ -28,7 +28,7 @@ AppDataSource.initialize()
     setupSocket(io)
 
     server.listen(3000, () => {
-      console.log("🚀 Server running on http://localhost:3000")
+      console.log("Server running on http://localhost:3000")
     })
   })
-  .catch((error) => console.error("❌ DB Init Error:", error))
+  .catch((error) => console.error("DB Init Error:", error))
