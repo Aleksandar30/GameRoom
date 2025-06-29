@@ -199,15 +199,15 @@ async function seedApp() {
     await userRepo.clear()
     await userRepo.save(hashedUsers)
 
-    console.log("✅ Seeding complete")
+    console.log("Seeding complete")
     process.exit(0)
 }
 
 
 seedApp().catch(err => {
-    console.error("\u274c Seeder error:", err)
+    console.error(" Seeder error:", err)
     process.exit(1)
 })
 
 
-// npx ts - node src / seeds / quizSeeder.ts
+// npx ts-node src/seeds/appSeeder.ts

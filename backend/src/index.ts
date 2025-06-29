@@ -23,7 +23,7 @@ app.use("/api", authRoutes)
 
 AppDataSource.initialize()
   .then(() => {
-    console.log("📦 Database connected")
+    console.log("Database connected")
 
     setupSocket(io)
 

@@ -2,8 +2,6 @@ import "reflect-metadata";
 import { DataSource } from "typeorm";
 import { User } from "./entities/User";
 import { Question } from "./entities/Question";
-// import { Lobby } from "./entities/Lobby";
-// import { LobbyPlayer } from "./entities/LobbyPlayer";
 
 export const AppDataSource = new DataSource({
   type: "mysql",
